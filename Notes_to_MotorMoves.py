@@ -90,7 +90,7 @@ def parse_notes_and_durations(notes_and_durations: str):
 
 
 def generate_motor_moves(motor, note_to_pitch_dict: dict, time_per_quarter_note: float, notes_and_durations: str):
-    max_z_dist = 265 #mm
+    max_z_dist = 250 #mm
     notes, durations = parse_notes_and_durations(notes_and_durations)
     
     # inital motor move
@@ -108,8 +108,10 @@ def generate_motor_moves(motor, note_to_pitch_dict: dict, time_per_quarter_note:
         match = re.match(r'^([A-G][#b]?)(\d+)$', note)
         if match:
             note_name, octave = match.groups()
-            if octave == '0':
-                note = "{}{}".format(note_name, int(octave) + 6)
+            if len(sys.argv) > 2:
+                note = "{}{}".format(note_name, int(octave) + int(sys.argv[2]))
+            #if octave == '0':
+            #    note = "{}{}".format(note_name, int(octave) + 6)
                 
         pitch = note_to_pitch_dict[note]
 
@@ -183,7 +185,14 @@ if __name__ == "__main__":
     print("Motors homed")
 
     print("Generating motor moves ...")
-    z_moves = generate_motor_moves(z, note_to_pitch_dict, 1, "C0[0.0625]/D0[0.0625]/F0[0.0625]/D0[0.0625]/A0[0.125]/A0[0.1875]/G0[0.375]/C0[0.0625]/D0[0.0625]/F0[0.0625]/D0[0.0625]/G0[0.125]/G0[0.1875]/F0[0.375]/E0[0.0625]/D0[0.125]/C0[0.0625]/D0[0.0625]/F0[0.0625]/D0[0.0625]/F0[0.25]/G0[0.125]/E0[0.1875]/D0[0.0625]/C0[0.25]/G0[0.25]/F0[0.5]")
+
+    default_song = "C0[0.0625]/D0[0.0625]/F0[0.0625]/D0[0.0625]/A0[0.125]/A0[0.1875]/G0[0.375]/C0[0.0625]/D0[0.0625]/F0[0.0625]/D0[0.0625]/G0[0.125]/G0[0.1875]/F0[0.375]/E0[0.0625]/D0[0.125]/C0[0.0625]/D0[0.0625]/F0[0.0625]/D0[0.0625]/F0[0.25]/G0[0.125]/E0[0.1875]/D0[0.0625]/C0[0.25]/G0[0.25]/F0[0.5]"
+    if len(sys.argv) > 1 or sys.argv[1]!="default":
+        song = sys.argv[1]
+        # print(sys.argv[1])
+    else: 
+        song = default_song
+    z_moves = generate_motor_moves(z, note_to_pitch_dict, 1, song)
     x_moves = x.make_motor_move(dist_mm=-150,
                             speed_mmps=100,
                             accel_mmps2=500,

@@ -114,7 +114,6 @@ def generate_motor_moves(motor, note_to_pitch_dict: dict, time_per_quarter_note:
             #    note = "{}{}".format(note_name, int(octave) + 6)
                 
         pitch = note_to_pitch_dict[note]
-
         speed = 0.0246*pitch+0.25 # from Speeds and Pitches excel
         # speed = pitch_to_speed_dict[pitch]
 
@@ -187,12 +186,21 @@ if __name__ == "__main__":
     print("Generating motor moves ...")
 
     default_song = "C0[0.0625]/D0[0.0625]/F0[0.0625]/D0[0.0625]/A0[0.125]/A0[0.1875]/G0[0.375]/C0[0.0625]/D0[0.0625]/F0[0.0625]/D0[0.0625]/G0[0.125]/G0[0.1875]/F0[0.375]/E0[0.0625]/D0[0.125]/C0[0.0625]/D0[0.0625]/F0[0.0625]/D0[0.0625]/F0[0.25]/G0[0.125]/E0[0.1875]/D0[0.0625]/C0[0.25]/G0[0.25]/F0[0.5]"
-    if len(sys.argv) > 1 or sys.argv[1]!="default":
-        song = sys.argv[1]
+    if len(sys.argv) > 1:
         # print(sys.argv[1])
+        if sys.argv[1] == "default":
+            song = default_song
+        else:
+            song = sys.argv[1]
     else: 
         song = default_song
-    z_moves = generate_motor_moves(z, note_to_pitch_dict, 1, song)
+    
+    if len(sys.argv) > 3:
+        bpm = int(sys.argv[3])
+    else:
+        bpm = 60
+    seconds_per_quarter_note = 60/bpm
+    z_moves = generate_motor_moves(z, note_to_pitch_dict, seconds_per_quarter_note, song)
     x_moves = x.make_motor_move(dist_mm=-150,
                             speed_mmps=100,
                             accel_mmps2=500,

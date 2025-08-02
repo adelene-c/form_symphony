@@ -94,11 +94,10 @@ def parse_notes_and_durations(notes_and_durations: str):
 
 def generate_motor_moves(motor, motor_type, octave_shift, note_to_pitch_dict: dict, time_per_quarter_note: float, notes_and_durations: str):
     if motor_type == "z":
-        min_pos = -250 #mm
+        min_pos = -245 #mm
         max_pos = 0
     notes, durations = parse_notes_and_durations(notes_and_durations)
-    
-    # inital motor move
+        # inital motor move
     motor_moves = motor.make_motor_move(dist_mm=0,speed_mmps=0, accel_mmps2=0)
 
     # keep track of distance travelled to switch directions as needed
@@ -194,7 +193,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--octave-shift",
         type=int,
-        default=6,
+        default=0,
         help="Octave shift to apply to the notes. Can be negative or positive."
     )
 
@@ -208,18 +207,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    
-    start_time = None
-
-    if args.start_time:
-        start_time = args.start_time
-    if args.song:
-        # print(sys.argv[1])
-        song = args.song
-    if args.bpm:
-        bpm = args.bpm
-    if args.octave_shift:
-        octave_shift = args.octave_shift
+    start_time = args.start_time
+    song = args.song
+    bpm = args.bpm
+    octave_shift = args.octave_shift
 
 
 

@@ -1,5 +1,7 @@
 import csv
 import re
+import time
+import os
 
 def pitch_to_motor_speeds(mapping_csv_file_path: str):
     """
@@ -89,15 +91,17 @@ def parse_notes_and_durations(notes_and_durations: str):
     return notes, durations
 
 
-def generate_motor_moves(motor, note_to_pitch_dict: dict, time_per_quarter_note: float, notes_and_durations: str):
-    max_z_dist = 250 #mm
+def generate_motor_moves(motor, motor_type, note_to_pitch_dict: dict, time_per_quarter_note: float, notes_and_durations: str):
+    if motor_type == "z":
+        min_pos = -250 #mm
+        max_pos = 0
     notes, durations = parse_notes_and_durations(notes_and_durations)
     
     # inital motor move
     motor_moves = motor.make_motor_move(dist_mm=0,speed_mmps=0, accel_mmps2=0)
 
     # keep track of distance travelled to switch directions as needed
-    total_dist = 0
+    curr_pos = 0
     dir = -1 # start by going down, since homing is at top
 
     for note, duration in zip(notes, durations):
@@ -109,7 +113,7 @@ def generate_motor_moves(motor, note_to_pitch_dict: dict, time_per_quarter_note:
         if match:
             note_name, octave = match.groups()
             if len(sys.argv) > 2:
-                note = "{}{}".format(note_name, int(octave) + int(sys.argv[2]))
+                note = "{}{}".format(note_name, int(octave) + int(sys.argv[3]))
             #if octave == '0':
             #    note = "{}{}".format(note_name, int(octave) + 6)
                 
@@ -121,15 +125,22 @@ def generate_motor_moves(motor, note_to_pitch_dict: dict, time_per_quarter_note:
         dist = speed*actual_duration # distance = speed*time
         
 
-        if (total_dist+dir*dist >= max_z_dist) or (total_dist+dir*dist <= -1*max_z_dist):
-            print("hit max")
-            dir *= -1 # flip direction
+        if (curr_pos+dir*dist >= max_pos or curr_pos+dir*dist <= min_pos):
+            print("Switch directions")
+            dir *= -1
+        # if ((total_dist+dir*dist >= max_z_dist) and (dir == -1)):
+        #     print("hit bottom")
+        #     dir *= -1 # flip direction
+        # elif ((total_dist-dir*dist < 0) and (dir == 1)):
+        #     print("hit top")
+        #     dir *= -1
         
         accel = 500 
 
         dist_dir = dir*dist
-        total_dist+=dist_dir
-        print("Note: ", note, "Pitch:", round(pitch, 2), " Speed: ", round(speed, 2), "Distance: :", round(dist_dir, 2), "Total Dist: ", round(total_dist, 2))
+        # total_dist+=dist_dir
+        curr_pos+=dist_dir
+        print("Note: ", note, "Pitch:", round(pitch, 2), " Speed: ", round(speed, 2), "Travel: :", round(dist_dir, 2), "Curr Pos: ", round(curr_pos, 2))
 
         motor_moves = append_motor_move(motor_moves, motor, dist_dir, speed, accel)
     
@@ -147,7 +158,11 @@ if __name__ == "__main__":
     # test_pitch_to_speed_dict = (pitch_to_motor_speeds("/data/form_symphony/speedsandpitches.csv"))
     
     # note_to_pitch_dict = notes_to_pitches("/home/adelene-chan/Downloads/Speeds and Pitches - Frequency to Notes - Only.csv")
-    note_to_pitch_dict = notes_to_pitches("/data/form_symphony/frequency_to_notes.csv")
+    
+    local_dir = os.path.dirname(os.path.abspath(__file__))
+    print("Local directory:", local_dir)
+    note_to_pitch_dict = notes_to_pitches(os.path.join(local_dir, "frequency_to_notes.csv"))
+    # note_to_pitch_dict = notes_to_pitches("/data/form_symphony_multi/frequency_to_notes.csv")
 
     # # Test
     # print(test_pitch_to_speed_dict[397]) # should return 10 
@@ -186,25 +201,36 @@ if __name__ == "__main__":
     print("Generating motor moves ...")
 
     default_song = "C0[0.0625]/D0[0.0625]/F0[0.0625]/D0[0.0625]/A0[0.125]/A0[0.1875]/G0[0.375]/C0[0.0625]/D0[0.0625]/F0[0.0625]/D0[0.0625]/G0[0.125]/G0[0.1875]/F0[0.375]/E0[0.0625]/D0[0.125]/C0[0.0625]/D0[0.0625]/F0[0.0625]/D0[0.0625]/F0[0.25]/G0[0.125]/E0[0.1875]/D0[0.0625]/C0[0.25]/G0[0.25]/F0[0.5]"
+    
+    start_time = None
     if len(sys.argv) > 1:
+        
+        if sys.argv[1] != 'None':
+            start_time = sys.argv[1]
+            print("start time", start_time)
+            print("start_time type", type(start_time))
+    if len(sys.argv) > 2:
         # print(sys.argv[1])
-        if sys.argv[1] == "default":
+        if sys.argv[2] == "default":
             song = default_song
         else:
-            song = sys.argv[1]
+            song = sys.argv[2]
     else: 
         song = default_song
     
-    if len(sys.argv) > 3:
-        bpm = int(sys.argv[3])
+    if len(sys.argv) > 4:
+        bpm = int(sys.argv[4])
     else:
         bpm = 60
+
     seconds_per_quarter_note = 60/bpm
-    z_moves = generate_motor_moves(z, note_to_pitch_dict, seconds_per_quarter_note, song)
+    z_moves = generate_motor_moves(z, "z", note_to_pitch_dict, seconds_per_quarter_note, song)
     x_moves = x.make_motor_move(dist_mm=-150,
                             speed_mmps=100,
                             accel_mmps2=500,
                             t_offset_s=1)
+    # x_moves = generate_motor_moves(x, "x", note_to_pitch_dict, seconds_per_quarter_note, song)
+
     combined_moves = {
         z.motor.name: z_moves,
         x.motor.name: x_moves
@@ -216,5 +242,20 @@ if __name__ == "__main__":
     # Now that all the moves are ready, kick them off.
     print("Initial Z Pos: ", z.pos_mm)
     print("Sending motor moves!")
+
+    if start_time is not None:
+    # INSERT_YOUR_CODE
+        start_time_float = float(start_time)
+        print("start_time_float", start_time_float)
+        now = time.time()
+        wait_seconds = start_time_float - now
+        print("waiting seconds", wait_seconds)
+        if wait_seconds > 0:
+            print("Waiting", wait_seconds)
+            # print(f"Waiting {wait_seconds:.2f} seconds until start time ({start_time_float}) ...")
+            time.sleep(wait_seconds)
+        # else:
+            # print(f"Start time {start_time_float} is in the past ({-wait_seconds:.2f} seconds ago), proceeding immediately.")
+
     steppers_object.ExecuteRelativeMovesBlocking(combined_moves)
     print("Final Z Pos: ", z.pos_mm)

@@ -94,7 +94,7 @@ def parse_notes_and_durations(notes_and_durations: str):
 
 def generate_motor_moves(motor, motor_type, octave_shift, note_to_pitch_dict: dict, time_per_quarter_note: float, notes_and_durations: str):
     if motor_type == "z":
-        min_pos = -245 #mm
+        min_pos = -225 #mm
         max_pos = 0
     notes, durations = parse_notes_and_durations(notes_and_durations)
         # inital motor move

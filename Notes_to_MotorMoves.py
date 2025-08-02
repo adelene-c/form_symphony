@@ -2,6 +2,7 @@ import csv
 import re
 import time
 import os
+import argparse
 
 def pitch_to_motor_speeds(mapping_csv_file_path: str):
     """
@@ -91,7 +92,7 @@ def parse_notes_and_durations(notes_and_durations: str):
     return notes, durations
 
 
-def generate_motor_moves(motor, motor_type, note_to_pitch_dict: dict, time_per_quarter_note: float, notes_and_durations: str):
+def generate_motor_moves(motor, motor_type, octave_shift, note_to_pitch_dict: dict, time_per_quarter_note: float, notes_and_durations: str):
     if motor_type == "z":
         min_pos = -250 #mm
         max_pos = 0
@@ -112,8 +113,8 @@ def generate_motor_moves(motor, motor_type, note_to_pitch_dict: dict, time_per_q
         match = re.match(r'^([A-G][#b]?)(\d+)$', note)
         if match:
             note_name, octave = match.groups()
-            if len(sys.argv) > 2:
-                note = "{}{}".format(note_name, int(octave) + int(sys.argv[3]))
+            
+            note = "{}{}".format(note_name, int(octave) + int(octave_shift))
             #if octave == '0':
             #    note = "{}{}".format(note_name, int(octave) + 6)
                 
@@ -172,6 +173,57 @@ if __name__ == "__main__":
 
     # print(parse_notes_and_durations('C0[0.0625]/D0[0.0625]/F0[0.0625]/A0[0.125]/A0[0.1875]/Gb0[0.375]/C0[0.0625]/D0[0.0625]/F0[0.0625]/A0[0.125]/A0[0.1875]/G0[0.375]'))
 
+    default_song = "C0[0.0625]/D0[0.0625]/F0[0.0625]/D0[0.0625]/A0[0.125]/A0[0.1875]/G0[0.375]/C0[0.0625]/D0[0.0625]/F0[0.0625]/D0[0.0625]/G0[0.125]/G0[0.1875]/F0[0.375]/E0[0.0625]/D0[0.125]/C0[0.0625]/D0[0.0625]/F0[0.0625]/D0[0.0625]/F0[0.25]/G0[0.125]/E0[0.1875]/D0[0.0625]/C0[0.25]/G0[0.25]/F0[0.5]"
+
+    # arg parse 
+    parser = argparse.ArgumentParser(description="Play a song with optional timing and pitch adjustments.")
+    parser.add_argument(
+        "--start-time",
+        type=int,  # UNIX timestamp (e.g., 1722610500)
+        default=0,
+        help="Optional UTC timestamp to start execution. If omitted, starts immediately."
+    )
+
+    parser.add_argument(
+        "--song",
+        type=str,
+        default=default_song,
+        help='Notes to play, e.g., "C0[0.25]/D0[0.5]"'
+    )
+
+    parser.add_argument(
+        "--octave-shift",
+        type=int,
+        default=6,
+        help="Octave shift to apply to the notes. Can be negative or positive."
+    )
+
+    parser.add_argument(
+        "--bpm",
+        type=int,
+        default=60,
+        help="Tempo in beats per minute (default: 60)"
+    )
+
+
+    args = parser.parse_args()
+
+    
+    start_time = None
+
+    if args.start_time:
+        start_time = args.start_time
+    if args.song:
+        # print(sys.argv[1])
+        song = args.song
+    if args.bpm:
+        bpm = args.bpm
+    if args.octave_shift:
+        octave_shift = args.octave_shift
+
+
+
+
     ### On printer 
     import logging
     import sys
@@ -200,36 +252,34 @@ if __name__ == "__main__":
 
     print("Generating motor moves ...")
 
-    default_song = "C0[0.0625]/D0[0.0625]/F0[0.0625]/D0[0.0625]/A0[0.125]/A0[0.1875]/G0[0.375]/C0[0.0625]/D0[0.0625]/F0[0.0625]/D0[0.0625]/G0[0.125]/G0[0.1875]/F0[0.375]/E0[0.0625]/D0[0.125]/C0[0.0625]/D0[0.0625]/F0[0.0625]/D0[0.0625]/F0[0.25]/G0[0.125]/E0[0.1875]/D0[0.0625]/C0[0.25]/G0[0.25]/F0[0.5]"
-    
-    start_time = None
-    if len(sys.argv) > 1:
+
+    # if len(sys.argv) > 1:
         
-        if sys.argv[1] != 'None':
-            start_time = sys.argv[1]
-            print("start time", start_time)
-            print("start_time type", type(start_time))
-    if len(sys.argv) > 2:
-        # print(sys.argv[1])
-        if sys.argv[2] == "default":
-            song = default_song
-        else:
-            song = sys.argv[2]
-    else: 
-        song = default_song
+    #     if sys.argv[1] != 'None':
+    #         start_time = sys.argv[1]
+    #         print("start time", start_time)
+    #         print("start_time type", type(start_time))
+    # if len(sys.argv) > 2:
+    #     # print(sys.argv[1])
+    #     if sys.argv[2] == "default":
+    #         song = default_song
+    #     else:
+    #         song = sys.argv[2]
+    # else: 
+    #     song = default_song
     
-    if len(sys.argv) > 4:
-        bpm = int(sys.argv[4])
-    else:
-        bpm = 60
+    # if len(sys.argv) > 4:
+    #     bpm = int(sys.argv[4])
+    # else:
+    #     bpm = 60
 
     seconds_per_quarter_note = 60/bpm
-    z_moves = generate_motor_moves(z, "z", note_to_pitch_dict, seconds_per_quarter_note, song)
+    z_moves = generate_motor_moves(z, "z", octave_shift, note_to_pitch_dict, seconds_per_quarter_note, song)
     x_moves = x.make_motor_move(dist_mm=-150,
                             speed_mmps=100,
                             accel_mmps2=500,
                             t_offset_s=1)
-    # x_moves = generate_motor_moves(x, "x", note_to_pitch_dict, seconds_per_quarter_note, song)
+    # x_moves = generate_motor_moves(x, "x", octave_shift, note_to_pitch_dict, seconds_per_quarter_note, song)
 
     combined_moves = {
         z.motor.name: z_moves,

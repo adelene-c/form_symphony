@@ -41,6 +41,7 @@ def midi_to_notes_and_durations(midi_file_path):
         notes = []
         active_notes = {}
         current_time = 0.0
+        instrument_channels = [None]*len(midi_file.tracks)
 
         for i, track in enumerate(midi_file.tracks):
             #print(track)
@@ -49,6 +50,8 @@ def midi_to_notes_and_durations(midi_file_path):
 
             for msg in track:
                 current_time += msg.time
+                if msg.type=="program_change":
+                    instrument_channels[i]=[[msg.program, msg.channel]]
                 #if (msg.type != 'note_on' and msg.type != 'note_off') and i==1 and msg.type=="program_change":
                 #    print(msg)
                 #if (msg.type == 'note_on' or msg.type == 'note_off')  and i==1:
@@ -74,7 +77,7 @@ def midi_to_notes_and_durations(midi_file_path):
                         })
 
                         del active_notes[note_key]
-
+        print(instrument_channels)
         return notes
     except FileNotFoundError:
         print(f"Error: The file '{midi_file_path}' was not found.")
@@ -87,7 +90,7 @@ def Notes2String(n_list):
     if not n_list: return ""
     song_string = ""
     for note in n_list:
-        if note['channel']==5:
+        if note['channel']==5 or note['channel']==4:
             song_string = song_string + note['note_name']+"["+str(note['duration'])+"]/"
     
     #returns everthing but the last character which will be a leftover note delimiter

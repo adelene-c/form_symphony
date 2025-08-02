@@ -32,24 +32,21 @@ def midi_to_notes_and_durations(midi_file_path):
 
     Returns:
         list: A list of dictionaries, where each dictionary contains
-              'pitch', 'channel', 'note_name', 'start_time', and 'duration' in seconds.
+              'pitch', 'channel', 'note_name', and 'duration_in_seconds'.
               Returns an empty list if an error occurs.
     """
     try:
         midi_file = MidiFile(midi_file_path)
-        #print(midi_file.ticks_per_beat)
         notes = []
+        # Use a dictionary to keep track of active notes, keyed by (pitch, channel)
         active_notes = {}
         current_time = 0.0
         instrument_channels = [None]*len(midi_file.tracks)
 
-        for i, track in enumerate(midi_file.tracks):
-            #print(track)
-            #if i==0:
-            #    print(track)
-
+        for track in midi_file.tracks:
             for msg in track:
                 current_time += msg.time
+<<<<<<< HEAD
                 if msg.type=="program_change":
                     instrument_channels[i]=[[msg.program, msg.channel]]
                 #if (msg.type != 'note_on' and msg.type != 'note_off') and i==1 and msg.type=="program_change":
@@ -57,25 +54,34 @@ def midi_to_notes_and_durations(midi_file_path):
                 #if (msg.type == 'note_on' or msg.type == 'note_off')  and i==1:
                 #    print(str(msg) + " " + str(current_time))
 
+=======
+                
+                # We only care about note messages
+>>>>>>> 483fc1d424f97006ebcc97d1bd62453df41ce8b7
                 if msg.type == 'note_on' and msg.velocity > 0:
+                    # A note_on event with non-zero velocity is the start of a note.
+                    # We use a tuple (pitch, channel) as the unique key
                     note_key = (msg.note, msg.channel)
                     active_notes[note_key] = {'start_time': current_time}
 
                 elif msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
+                    # A note_off or note_on with zero velocity is the end of a note.
                     note_key = (msg.note, msg.channel)
                     
                     if note_key in active_notes:
+                        # If a corresponding start note exists in our dictionary, calculate duration
                         start_time = active_notes[note_key]['start_time']
                         duration = current_time - start_time
                         
+                        # Store the completed note's data
                         notes.append({
-                            'note_name': pitch_to_note_name(msg.note),
                             'pitch': msg.note,
+                            'note_name': pitch_to_note_name(msg.note),
                             'channel': msg.channel,
-                            'start_time': start_time*1E-3,
-                            'duration': duration*1E-3
+                            'duration': duration
                         })
 
+                        # Remove the note from the active_notes dictionary
                         del active_notes[note_key]
         print(instrument_channels)
         return notes
@@ -86,6 +92,7 @@ def midi_to_notes_and_durations(midi_file_path):
         print(f"An error occurred: {e}")
         return []
 
+<<<<<<< HEAD
 def Notes2String(n_list):
     if not n_list: return ""
     song_string = ""
@@ -96,21 +103,17 @@ def Notes2String(n_list):
     #returns everthing but the last character which will be a leftover note delimiter
     return song_string[:-1]
 
+=======
+>>>>>>> 483fc1d424f97006ebcc97d1bd62453df41ce8b7
 if __name__ == '__main__':
-    #midi_file = 'RickRoll.mid'  # Replace with your file name
-    midi_file = 'Queen_Bohemian_Rhapsody.mid'
+    midi_file = 'RickRoll.mid'  # Replace with your file name
     note_list = midi_to_notes_and_durations(midi_file)
 
-    print(Notes2String(note_list))
-
-    '''
     if note_list:
-        print("Notes, Pitches, Durations, Channels, and Start Times:")
+        print("Notes, Pitches, Durations, and Channels:")
         for note_data in note_list:
-            if note_data['channel']==5:
+            if note_data['channel']==8:
                 print(f"Note: {note_data['note_name']}, Pitch: {note_data['pitch']}, "
-                    f"Channel: {note_data['channel']}, Start Time: {note_data['start_time']:.4f}s, "
-                    f"Duration: {note_data['duration']:.4f}s")
+                    f"Duration: {note_data['duration']:.4f} seconds, Channel: {note_data['channel']}")
     else:
         print("No notes found or an error occurred.")
-    '''

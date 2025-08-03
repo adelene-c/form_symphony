@@ -111,7 +111,7 @@ if __name__ == '__main__':
     midi_file = 'RickRoll.mid'  # Replace with your file name
     note_list = midi_to_notes_and_durations(midi_file)
 
-    print(Notes2String(note_list, [15]))
+    print(Notes2String(note_list, [8]))
 
     #if note_list:
     #    print("Notes, Pitches, Durations, and Channels:")

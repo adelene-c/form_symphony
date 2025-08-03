@@ -42,6 +42,7 @@ def midi_to_notes_and_durations(midi_file_path):
         active_notes = {}
         current_time = 0.0
         instrument_channels = [None]*len(midi_file.tracks)
+        print(len(midi_file.tracks))
 
         for i, track in enumerate(midi_file.tracks):
             for msg in track:
@@ -72,7 +73,7 @@ def midi_to_notes_and_durations(midi_file_path):
                             'note_name': pitch_to_note_name(msg.note),
                             'channel': msg.channel,
                             'duration': duration*1E-3,
-                            'start_time': start_time
+                            'start_time': start_time*1E-3
                         })
 
                         # Remove the note from the active_notes dictionary
@@ -96,9 +97,9 @@ def Notes2String(n_list, channels):
             #if there is a gap between this note and the last note, 
             if most_recent_note:
                 rest_time = note['start_time']-(most_recent_note['start_time']+most_recent_note['duration'])
-                if rest_time>0:
+                #if rest_time>0:
                     #rest_time = note['start_time']-(most_recent_note['start_time']+most_recent_note['duration'])
-                    song_string = song_string+"R["+str(rest_time)+"]/"
+                #    song_string = song_string+"R["+str(rest_time)+"]/"
             song_string = song_string + note['note_name']+"["+str(note['duration'])+"]/"
             most_recent_note = note
     
@@ -109,7 +110,7 @@ if __name__ == '__main__':
     midi_file = 'RickRoll.mid'  # Replace with your file name
     note_list = midi_to_notes_and_durations(midi_file)
 
-    print(Notes2String(note_list, [13]))
+    print(Notes2String(note_list, [15]))
 
     #if note_list:
     #    print("Notes, Pitches, Durations, and Channels:")

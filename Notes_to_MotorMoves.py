@@ -212,6 +212,8 @@ if __name__ == "__main__":
     bpm = args.bpm
     octave_shift = args.octave_shift
 
+    print("bpm: ", bpm)
+    print("octave_shift: ", octave_shift)
 
 
 

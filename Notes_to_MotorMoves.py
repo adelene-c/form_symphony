@@ -69,7 +69,7 @@ def notes_to_pitches(mapping_csv_file_path: str):
             pitch = float(row[1]) # float
             note = row[0] # string
             note_to_pitch_dict[note] = pitch
-
+    note_to_pitch_dict['R'] = 10
     return note_to_pitch_dict
 
 def parse_notes_and_durations(notes_and_durations: str):
@@ -83,7 +83,7 @@ def parse_notes_and_durations(notes_and_durations: str):
     # This line uses a regular expression to find all note and duration pairs in the input string.
     # It looks for patterns like "C#4[0.5]" or "A3[1]", capturing the note (e.g., "C#4") and its duration (e.g., "0.5").
     # The result is a list of tuples, where each tuple contains the note and its corresponding duration as strings.
-    matches = re.findall(r'([A-G][#b]?\d*)\[(\d+\.?\d*)\]', notes_and_durations)
+    matches = re.findall(r'([A-GR][#b]?\d*)\[(\d+\.?\d*)\]', notes_and_durations)
     for note, duration in matches:
         notes.append(note)
         durations.append(float(duration))
@@ -110,7 +110,7 @@ def generate_motor_moves(motor, motor_type, octave_shift, note_to_pitch_dict: di
 
         # note to pitch 
         # Parse the note for the octave number and add 6 if it's 0
-        match = re.match(r'^([A-G][#b]?)(\d+)$', note)
+        match = re.match(r'^([A-GR][#b]?)(\d+)$', note)
         if match:
             note_name, octave = match.groups()
             

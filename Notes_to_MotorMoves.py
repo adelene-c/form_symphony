@@ -123,7 +123,7 @@ def generate_motor_moves(motor, motor_type, octave_shift, note_to_pitch_dict: di
         # speed = pitch_to_speed_dict[pitch]
 
         actual_duration = duration/0.25 * time_per_quarter_note # ex. 1 second for quarter note means 0.125/0.25 * time_per_quarternote
-        dist = speed*(actual_duration-2*speed/accel)+accel*(speed/accel)^2 # distance = speed*time
+        dist = speed*(actual_duration-2*speed/accel)+accel*(speed/accel)**2 # distance = speed*time
         
 
         if (curr_pos+dir*dist >= max_pos or curr_pos+dir*dist <= min_pos):

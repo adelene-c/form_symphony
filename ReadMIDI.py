@@ -72,8 +72,8 @@ def midi_to_notes_and_durations(midi_file_path):
                             'pitch': msg.note,
                             'note_name': pitch_to_note_name(msg.note),
                             'channel': msg.channel,
-                            'duration': duration*1E-3,
-                            'start_time': start_time*1E-3
+                            'duration': duration*1E-3/0.088*0.0625, # convert to beats because it makes things easier later
+                            'start_time': start_time*1E-3/0.088*0.0625
                         })
 
                         # Remove the note from the active_notes dictionary
@@ -97,9 +97,10 @@ def Notes2String(n_list, channels):
             #if there is a gap between this note and the last note, 
             if most_recent_note:
                 rest_time = note['start_time']-(most_recent_note['start_time']+most_recent_note['duration'])
-                #if rest_time>0:
-                    #rest_time = note['start_time']-(most_recent_note['start_time']+most_recent_note['duration'])
-                #    song_string = song_string+"R["+str(rest_time)+"]/"
+                #get rid of tiny rests - may depend on the song file
+                if rest_time>0.011364:
+                    rest_time = note['start_time']-(most_recent_note['start_time']+most_recent_note['duration'])
+                    song_string = song_string+"R["+str(rest_time)+"]/"
             song_string = song_string + note['note_name']+"["+str(note['duration'])+"]/"
             most_recent_note = note
     

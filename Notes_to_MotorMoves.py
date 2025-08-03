@@ -275,15 +275,16 @@ if __name__ == "__main__":
                             accel_mmps2=500,
                             t_offset_s=1)
     # x_moves = generate_motor_moves(x, "x", octave_shift, note_to_pitch_dict, seconds_per_quarter_note, song)
-    numChunks = math.ceil(len(z_moves)/100) # 100 is roughly the max number of moves the stepper function can handle before throwing an error
+    maxNotes = 50
+    numChunks = math.ceil(len(z_moves)/maxNotes) # 100 is roughly the max number of moves the stepper function can handle before throwing an error
     combined_moves_list = []
     for i in range(numChunks):
-        if (i+1)*100 > len(z_moves):
+        if (i+1)*maxNotes > len(z_moves):
             lastIndex = len(z_moves)
-        else: lastIndex = (i+1)*100
+        else: lastIndex = (i+1)*maxNotes
         combined_moves_list.append(
             {
-            z.motor.name: z_moves[i*100:lastIndex],
+            z.motor.name: z_moves[i*maxNotes:lastIndex],
             x.motor.name: x_moves
             } 
         )

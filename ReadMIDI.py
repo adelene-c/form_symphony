@@ -43,21 +43,14 @@ def midi_to_notes_and_durations(midi_file_path):
         current_time = 0.0
         instrument_channels = [None]*len(midi_file.tracks)
 
-        for track in midi_file.tracks:
+        for i, track in enumerate(midi_file.tracks):
             for msg in track:
                 current_time += msg.time
-<<<<<<< HEAD
+
                 if msg.type=="program_change":
                     instrument_channels[i]=[[msg.program, msg.channel]]
-                #if (msg.type != 'note_on' and msg.type != 'note_off') and i==1 and msg.type=="program_change":
-                #    print(msg)
-                #if (msg.type == 'note_on' or msg.type == 'note_off')  and i==1:
-                #    print(str(msg) + " " + str(current_time))
 
-=======
-                
                 # We only care about note messages
->>>>>>> 483fc1d424f97006ebcc97d1bd62453df41ce8b7
                 if msg.type == 'note_on' and msg.velocity > 0:
                     # A note_on event with non-zero velocity is the start of a note.
                     # We use a tuple (pitch, channel) as the unique key
@@ -78,7 +71,7 @@ def midi_to_notes_and_durations(midi_file_path):
                             'pitch': msg.note,
                             'note_name': pitch_to_note_name(msg.note),
                             'channel': msg.channel,
-                            'duration': duration
+                            'duration': duration*1E-3
                         })
 
                         # Remove the note from the active_notes dictionary
@@ -92,28 +85,27 @@ def midi_to_notes_and_durations(midi_file_path):
         print(f"An error occurred: {e}")
         return []
 
-<<<<<<< HEAD
-def Notes2String(n_list):
+def Notes2String(n_list, channels):
     if not n_list: return ""
     song_string = ""
     for note in n_list:
-        if note['channel']==5 or note['channel']==4:
+        if note['channel'] in channels:
             song_string = song_string + note['note_name']+"["+str(note['duration'])+"]/"
     
     #returns everthing but the last character which will be a leftover note delimiter
     return song_string[:-1]
 
-=======
->>>>>>> 483fc1d424f97006ebcc97d1bd62453df41ce8b7
 if __name__ == '__main__':
     midi_file = 'RickRoll.mid'  # Replace with your file name
     note_list = midi_to_notes_and_durations(midi_file)
 
-    if note_list:
-        print("Notes, Pitches, Durations, and Channels:")
-        for note_data in note_list:
-            if note_data['channel']==8:
-                print(f"Note: {note_data['note_name']}, Pitch: {note_data['pitch']}, "
-                    f"Duration: {note_data['duration']:.4f} seconds, Channel: {note_data['channel']}")
-    else:
-        print("No notes found or an error occurred.")
+    print(Notes2String(note_list, [13]))
+
+    #if note_list:
+    #    print("Notes, Pitches, Durations, and Channels:")
+    #    for note_data in note_list:
+    #        if note_data['channel']==8:
+    #            print(f"Note: {note_data['note_name']}, Pitch: {note_data['pitch']}, "
+    #                f"Duration: {note_data['duration']:.4f} seconds, Channel: {note_data['channel']}")
+    #else:
+    #    print("No notes found or an error occurred.")

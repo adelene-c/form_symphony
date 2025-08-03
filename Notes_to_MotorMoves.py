@@ -103,6 +103,7 @@ def generate_motor_moves(motor, motor_type, octave_shift, note_to_pitch_dict: di
     # keep track of distance travelled to switch directions as needed
     curr_pos = 0
     dir = -1 # start by going down, since homing is at top
+    accel = 500 #acceleration in mmpsps, increase for more snappy movements
 
     for note, duration in zip(notes, durations):
         # get speed from dict
@@ -122,7 +123,7 @@ def generate_motor_moves(motor, motor_type, octave_shift, note_to_pitch_dict: di
         # speed = pitch_to_speed_dict[pitch]
 
         actual_duration = duration/0.25 * time_per_quarter_note # ex. 1 second for quarter note means 0.125/0.25 * time_per_quarternote
-        dist = speed*actual_duration # distance = speed*time
+        dist = speed*(actual_duration-2*speed/accel)+accel*(speed/accel)**2 # distance = speed*time
         
 
         if (curr_pos+dir*dist >= max_pos or curr_pos+dir*dist <= min_pos):
@@ -135,7 +136,7 @@ def generate_motor_moves(motor, motor_type, octave_shift, note_to_pitch_dict: di
         #     print("hit top")
         #     dir *= -1
         
-        accel = 500 
+         
 
         dist_dir = dir*dist
         # total_dist+=dist_dir

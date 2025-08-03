@@ -105,6 +105,7 @@ def generate_motor_moves(motor, motor_type, octave_shift, note_to_pitch_dict: di
     curr_pos = 0
     dir = -1 # start by going down, since homing is at top
     accel = 1500 #acceleration in mmpsps, increase for more snappy movements
+    decel = 800 #acceleration in mmpsps, lower than accel to make the motor happier during high notes
 
     for note, duration in zip(notes, durations):
         # get speed from dict
@@ -124,7 +125,7 @@ def generate_motor_moves(motor, motor_type, octave_shift, note_to_pitch_dict: di
         # speed = pitch_to_speed_dict[pitch]
 
         actual_duration = duration/0.25 * time_per_quarter_note # ex. 1 second for quarter note means 0.125/0.25 * time_per_quarternote
-        dist = speed*(actual_duration-2*speed/accel)+accel*(speed/accel)**2 # distance = speed*time
+        dist = speed*(actual_duration-speed/accel-speed/decel)+0.5*accel*(speed/accel)**2+0.5*accel*(speed/decel)**2 # distance = speed*time
         
 
         if (curr_pos+dir*dist >= max_pos or curr_pos+dir*dist <= min_pos):
@@ -144,14 +145,15 @@ def generate_motor_moves(motor, motor_type, octave_shift, note_to_pitch_dict: di
         curr_pos+=dist_dir
         print("Note: ", note, "Pitch:", round(pitch, 2), " Speed: ", round(speed, 2), "Travel: :", round(dist_dir, 2), "Curr Pos: ", round(curr_pos, 2))
 
-        motor_moves = append_motor_move(motor_moves, motor, dist_dir, speed, accel)
+        motor_moves = append_motor_move(motor_moves, motor, dist_dir, speed, accel, decel)
     
     return motor_moves
 
-def append_motor_move(motor_moves, motor, dist, speed, accel):
+def append_motor_move(motor_moves, motor, dist, speed, accel, decel):
     motor_moves.extend(motor.make_motor_move(dist_mm=dist,
                     speed_mmps=speed,
-                    accel_mmps2=accel))
+                    accel_mmps2=accel,
+                    decel_mmps2=decel))
      
     return motor_moves
 

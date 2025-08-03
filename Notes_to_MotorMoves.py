@@ -3,6 +3,7 @@ import re
 import time
 import os
 import argparse
+import math
 
 def pitch_to_motor_speeds(mapping_csv_file_path: str):
     """
@@ -274,6 +275,18 @@ if __name__ == "__main__":
                             accel_mmps2=500,
                             t_offset_s=1)
     # x_moves = generate_motor_moves(x, "x", octave_shift, note_to_pitch_dict, seconds_per_quarter_note, song)
+    numChunks = math.ceil(len(z_moves)/100) # 100 is roughly the max number of moves the stepper function can handle before throwing an error
+    combined_moves_list = []
+    for i in range(numChunks):
+        if (i+1)*100 > len(z_moves):
+            lastIndex = len(z_moves)
+        else: lastIndex = (i+1)*100
+        combined_moves_list.append(
+            {
+            z.motor.name: z_moves[i*100:lastIndex],
+            x.motor.name: x_moves
+            } 
+        )
 
     combined_moves = {
         z.motor.name: z_moves,
@@ -300,6 +313,8 @@ if __name__ == "__main__":
             time.sleep(wait_seconds)
         # else:
             # print(f"Start time {start_time_float} is in the past ({-wait_seconds:.2f} seconds ago), proceeding immediately.")
+    for moves in combined_moves_list:
+        steppers_object.ExecuteRelativeMovesBlocking(moves)
 
-    steppers_object.ExecuteRelativeMovesBlocking(combined_moves)
+    # steppers_object.ExecuteRelativeMovesBlocking(combined_moves)
     print("Final Z Pos: ", z.pos_mm)

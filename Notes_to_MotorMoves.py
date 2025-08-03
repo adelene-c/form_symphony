@@ -43,7 +43,7 @@ def pitch_to_motor_speeds(mapping_csv_file_path: str):
     # # pitch_to_speed = df.set_index('Pitch 1 (Hz)')['Speed (mmps)'].to_dict()
     # return pitch_to_speed_dict
 
-def notes_to_pitches(mapping_csv_file_path: str):
+def notes_to_pitches(mapping_csv_file_path: str, harmony_mult):
     """
     Reads csv and then turns into dictionary of pitch to notes
     """
@@ -69,7 +69,7 @@ def notes_to_pitches(mapping_csv_file_path: str):
                 
             pitch = float(row[1]) # float
             note = row[0] # string
-            note_to_pitch_dict[note] = pitch
+            note_to_pitch_dict[note] = pitch*harmony_mult
     note_to_pitch_dict['R'] = 10
     return note_to_pitch_dict
 
@@ -163,9 +163,6 @@ if __name__ == "__main__":
     
     # note_to_pitch_dict = notes_to_pitches("/home/adelene-chan/Downloads/Speeds and Pitches - Frequency to Notes - Only.csv")
     
-    local_dir = os.path.dirname(os.path.abspath(__file__))
-    print("Local directory:", local_dir)
-    note_to_pitch_dict = notes_to_pitches(os.path.join(local_dir, "frequency_to_notes.csv"))
     # note_to_pitch_dict = notes_to_pitches("/data/form_symphony_multi/frequency_to_notes.csv")
 
     # # Test
@@ -208,6 +205,13 @@ if __name__ == "__main__":
         help="Tempo in beats per minute (default: 60)"
     )
 
+    parser.add_argument(
+        "--harmony",
+        type=float,
+        default=1,
+        help="Frequency Multiplier for Harmony (default: 1)"
+    )
+
 
     args = parser.parse_args()
 
@@ -215,11 +219,14 @@ if __name__ == "__main__":
     song = args.song
     bpm = args.bpm
     octave_shift = args.octave_shift
+    harmony = args.harmony
 
     print("bpm: ", bpm)
     print("octave_shift: ", octave_shift)
 
-
+    local_dir = os.path.dirname(os.path.abspath(__file__))
+    print("Local directory:", local_dir)
+    note_to_pitch_dict = notes_to_pitches(os.path.join(local_dir, "frequency_to_notes.csv"), harmony)
 
     ### On printer 
     import logging
@@ -277,7 +284,7 @@ if __name__ == "__main__":
                             accel_mmps2=500,
                             t_offset_s=1)
     # x_moves = generate_motor_moves(x, "x", octave_shift, note_to_pitch_dict, seconds_per_quarter_note, song)
-    maxNotes = 50
+    maxNotes = 10
     numChunks = math.ceil(len(z_moves)/maxNotes) # 100 is roughly the max number of moves the stepper function can handle before throwing an error
     combined_moves_list = []
     for i in range(numChunks):
@@ -290,7 +297,7 @@ if __name__ == "__main__":
             x.motor.name: x_moves
             } 
         )
-
+    #All moves together
     combined_moves = {
         z.motor.name: z_moves,
         x.motor.name: x_moves
@@ -316,8 +323,17 @@ if __name__ == "__main__":
             time.sleep(wait_seconds)
         # else:
             # print(f"Start time {start_time_float} is in the past ({-wait_seconds:.2f} seconds ago), proceeding immediately.")
+    #Using chunked moves
     for moves in combined_moves_list:
         steppers_object.ExecuteRelativeMovesBlocking(moves)
+        print("finished a chunk")
+    #steppers_object.ExecuteRelativeMovesBlocking(combined_moves)
 
-    # steppers_object.ExecuteRelativeMovesBlocking(combined_moves)
+    #individual moves
+    #for i,move in enumerate(z_moves):
+    #    one_combined_move = {
+    #        z.motor.name: z_moves[i:i+1],
+    #        x.motor.name: x_moves
+    #    }
+    #    steppers_object.ExecuteRelativeMovesBlocking(one_combined_move)
     print("Final Z Pos: ", z.pos_mm)

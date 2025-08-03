@@ -71,7 +71,8 @@ def midi_to_notes_and_durations(midi_file_path):
                             'pitch': msg.note,
                             'note_name': pitch_to_note_name(msg.note),
                             'channel': msg.channel,
-                            'duration': duration*1E-3
+                            'duration': duration*1E-3,
+                            'start_time': start_time
                         })
 
                         # Remove the note from the active_notes dictionary
@@ -88,9 +89,18 @@ def midi_to_notes_and_durations(midi_file_path):
 def Notes2String(n_list, channels):
     if not n_list: return ""
     song_string = ""
+    most_recent_note = None
     for note in n_list:
+        #Insert all relevant notes into song string
         if note['channel'] in channels:
+            #if there is a gap between this note and the last note, 
+            if most_recent_note:
+                rest_time = note['start_time']-(most_recent_note['start_time']+most_recent_note['duration'])
+                if rest_time>0:
+                    #rest_time = note['start_time']-(most_recent_note['start_time']+most_recent_note['duration'])
+                    song_string = song_string+"R["+str(rest_time)+"]/"
             song_string = song_string + note['note_name']+"["+str(note['duration'])+"]/"
+            most_recent_note = note
     
     #returns everthing but the last character which will be a leftover note delimiter
     return song_string[:-1]

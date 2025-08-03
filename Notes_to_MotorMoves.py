@@ -103,7 +103,7 @@ def generate_motor_moves(motor, motor_type, octave_shift, note_to_pitch_dict: di
     # keep track of distance travelled to switch directions as needed
     curr_pos = 0
     dir = -1 # start by going down, since homing is at top
-    accel = 500 #acceleration in mmpsps, increase for more snappy movements
+    accel = 1500 #acceleration in mmpsps, increase for more snappy movements
 
     for note, duration in zip(notes, durations):
         # get speed from dict
